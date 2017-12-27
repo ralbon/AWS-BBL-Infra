@@ -1,0 +1,7 @@
+aws_template*.sh
+!aws_template.sh
+*.tfstate*
+**/.idea
+**/.terraform
+**/*.retry
+*.swp
