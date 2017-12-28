@@ -6,3 +6,4 @@ aws_template*.sh
 **/*.retry
 *.swp
 *.iml
+OCTO-BBL-AWS.pem
