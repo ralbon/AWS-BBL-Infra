@@ -52,6 +52,7 @@ data "aws_ami" "ec2-linux" {
 resource "aws_instance" "web-result" {
   ami = "${data.aws_ami.ec2-linux.id}"
   instance_type = "t2.micro"
+  key_name = "OCTO-BBL-AWS"
 
   subnet_id = "subnet-f578e98e"
   vpc_security_group_ids = [
@@ -66,6 +67,7 @@ resource "aws_instance" "web-result" {
 resource "aws_instance" "web-vote" {
   ami = "${data.aws_ami.ec2-linux.id}"
   instance_type = "t2.micro"
+  key_name = "OCTO-BBL-AWS"
   subnet_id = "subnet-f578e98e"
   vpc_security_group_ids = [
     "sg-09a08a61",
