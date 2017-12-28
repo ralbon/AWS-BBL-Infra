@@ -26,8 +26,8 @@ resource "aws_db_instance" "pg-vote" {
   name = "postgres"
   username = "postgres"
   password = "postgres"
-  vpc_security_group_ids = [
-    "sg-ac2acbc4"]
+  vpc_security_group_ids = ["sg-ac2acbc4"]
+  skip_final_snapshot = true
 }
 
 data "aws_ami" "ec2-linux" {
@@ -82,6 +82,7 @@ resource "aws_instance" "web-vote" {
 resource "aws_iam_role" "iam_for_lambda" {
   name = "iam_for_lambda"
 
+
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -89,7 +90,7 @@ resource "aws_iam_role" "iam_for_lambda" {
     {
       "Action": "sts:AssumeRole",
       "Principal": {
-        "Service": "lambda.amazonaws.com"
+        "Service": ["lambda.amazonaws.com", "ec2.amazonaws.com"]
       },
       "Effect": "Allow",
       "Sid": ""
@@ -97,6 +98,13 @@ resource "aws_iam_role" "iam_for_lambda" {
   ]
 }
 EOF
+}
+
+
+resource "aws_iam_policy_attachment" "test-attach" {
+  name       = "test-attachment"
+  roles      = ["${aws_iam_role.iam_for_lambda.name}"]
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
 resource "aws_cloudwatch_event_rule" "trigger-rule" {
@@ -129,6 +137,11 @@ resource "aws_lambda_function" "vote-worker" {
   handler = "app.voteWorker"
   runtime = "python2.7"
   timeout = 30
+
+  vpc_config {
+    security_group_ids = ["sg-ac2acbc4"]
+    subnet_ids = ["subnet-9038e2dd"]
+  }
 
   environment {
     variables = {
