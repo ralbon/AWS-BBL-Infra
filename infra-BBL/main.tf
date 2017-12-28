@@ -1,3 +1,33 @@
+resource "aws_elasticache_replication_group" "redis-instance" {
+  replication_group_id          = "redis"
+  replication_group_description = "Redis cluster for Hashicorp ElastiCache example"
+  engine               = "redis"
+  number_cache_clusters         = 2
+
+  node_type            = "cache.t2.micro"
+  port                 = 6379
+  parameter_group_name = "default.redis3.2"
+
+  snapshot_retention_limit = 0
+
+
+  security_group_ids = ["sg-ac2acbc4"]
+}
+
+
+resource "aws_db_instance" "pg-vote" {
+  identifier           = "pg-vote"
+  allocated_storage    = 20
+  storage_type         = "gp2"
+  engine               = "postgres"
+  engine_version       = "9.6.3"
+  instance_class       = "db.t2.micro"
+  name                 = "postgres"
+  username             = "postgres"
+  password             = "postgres"
+  vpc_security_group_ids = ["sg-ac2acbc4"]
+}
+
 data "aws_ami" "ec2-linux" {
   most_recent = true
   filter {
@@ -21,7 +51,6 @@ resource "aws_instance" "web-result" {
   subnet_id = "subnet-f578e98e"
   vpc_security_group_ids = ["sg-844242ec", "sg-ac2acbc4"]
 
-
   tags {
     Name = "catvsdog-result"
   }
@@ -33,34 +62,11 @@ resource "aws_instance" "web-vote" {
   subnet_id = "subnet-f578e98e"
   vpc_security_group_ids = ["sg-09a08a61", "sg-ac2acbc4"]
 
-
   tags {
     Name = "catvsdog-vote"
   }
 }
 
-resource "aws_elasticache_cluster" "redis" {
-  cluster_id           = "redis"
-  engine               = "redis"
-  node_type            = "cache.t2.micro"
-  port                 = 6379
-  num_cache_nodes      = 1
-  parameter_group_name = "default.redis3.2"
-  security_group_ids = ["sg-ac2acbc4"]
-}
-
-resource "aws_db_instance" "pg-vote" {
-  identifier           = "pg-vote"
-  allocated_storage    = 20
-  storage_type         = "gp2"
-  engine               = "postgres"
-  engine_version       = "9.6.3"
-  instance_class       = "db.t2.micro"
-  name                 = "postgres"
-  username             = "postgres"
-  password             = "postgres"
-  vpc_security_group_ids = ["sg-ac2acbc4"]
-}
 
 resource "aws_iam_role" "iam_for_lambda" {
   name = "iam_for_lambda"
@@ -93,8 +99,8 @@ resource "aws_lambda_function" "vote-worker" {
 
   environment {
     variables = {
-#      REDIS_HOST = "${aws_elasticache_cluster.redis.connection}"
-#      PG_HOST = "${aws_db_instance.pg-vote.address}"
+      REDIS_HOST = "${aws_elasticache_replication_group.redis-instance.primary_endpoint_address}"
+      PG_HOST = "${aws_db_instance.pg-vote.address}"
     }
   }
 }
