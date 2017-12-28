@@ -126,6 +126,7 @@ resource "aws_lambda_function" "vote-worker" {
   role = "${aws_iam_role.iam_for_lambda.arn}"
   handler = "app.voteWorker"
   runtime = "python2.7"
+  timeout = 30
 
   environment {
     variables = {
