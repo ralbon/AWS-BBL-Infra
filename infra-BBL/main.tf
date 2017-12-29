@@ -1,3 +1,6 @@
+
+## Instanciate REDIS
+
 resource "aws_elasticache_replication_group" "redis-instance" {
   replication_group_id = "redis"
   replication_group_description = "Redis cluster for Hashicorp ElastiCache example"
@@ -15,6 +18,7 @@ resource "aws_elasticache_replication_group" "redis-instance" {
     "sg-ac2acbc4"]
 }
 
+## Instanciate POSTGRES
 
 resource "aws_db_instance" "pg-vote" {
   identifier = "pg-vote"
@@ -26,9 +30,13 @@ resource "aws_db_instance" "pg-vote" {
   name = "postgres"
   username = "postgres"
   password = "postgres"
+
   vpc_security_group_ids = ["sg-ac2acbc4"]
+
   skip_final_snapshot = true
 }
+
+## Get AMI
 
 data "aws_ami" "ec2-linux" {
   most_recent = true
@@ -49,35 +57,62 @@ data "aws_ami" "ec2-linux" {
   }
 }
 
+## Instanciate Result EC2
+
+data "template_file" "user_data_result" {
+  template = "${file("user_data_result.tpl")}"
+
+  vars {
+    PG_HOST="${aws_db_instance.pg-vote.address}"
+  }
+}
+
 resource "aws_instance" "web-result" {
   ami = "${data.aws_ami.ec2-linux.id}"
   instance_type = "t2.micro"
-  key_name = "OCTO-BBL-AWS"
 
   subnet_id = "subnet-f578e98e"
   vpc_security_group_ids = [
     "sg-844242ec",
     "sg-ac2acbc4"]
 
+  key_name = "OCTO-BBL-AWS"
+  user_data = "${data.template_file.user_data_result.rendered}"
+
   tags {
     Name = "catvsdog-result"
+  }
+
+}
+
+## Instanciate Vote EC2
+
+data "template_file" "user_data_vote" {
+  template = "${file("user_data_vote.tpl")}"
+
+  vars {
+    REDIS_HOST="${aws_elasticache_replication_group.redis-instance.primary_endpoint_address}"
   }
 }
 
 resource "aws_instance" "web-vote" {
   ami = "${data.aws_ami.ec2-linux.id}"
   instance_type = "t2.micro"
-  key_name = "OCTO-BBL-AWS"
+
   subnet_id = "subnet-f578e98e"
   vpc_security_group_ids = [
     "sg-09a08a61",
     "sg-ac2acbc4"]
+
+  key_name = "OCTO-BBL-AWS"
+  user_data = "${data.template_file.user_data_vote.rendered}"
 
   tags {
     Name = "catvsdog-vote"
   }
 }
 
+## Instanciate Lambda
 
 resource "aws_iam_role" "iam_for_lambda" {
   name = "iam_for_lambda"
@@ -99,7 +134,6 @@ resource "aws_iam_role" "iam_for_lambda" {
 }
 EOF
 }
-
 
 resource "aws_iam_policy_attachment" "test-attach" {
   name       = "test-attachment"
