@@ -1,6 +1,6 @@
 Cat VS Dog Voting App
 =========
-This repository contain the Terraform deployment for the voting application
+This repository contain the Terraform deployment implementation in **AWS** for the voting application
 * Result part: [https://github.com/CYYG/catvsdog-result](https://github.com/CYYG/catvsdog-result)
 * Vote part: [https://github.com/CYYG/catvsdog-vote](https://github.com/CYYG/catvsdog-vote)
 * Lambda Worker: [https://github.com/CYYG/catvsdog-worker](https://github.com/CYYG/catvsdog-worker)
