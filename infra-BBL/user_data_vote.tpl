@@ -9,4 +9,4 @@ sudo pip install docker-compose
 sudo service docker start
 git clone https://github.com/CYYG/catvsdog-vote.git
 cd catvsdog-vote/
-sudo REDIS_HOST=${REDIS_HOST}  `which docker-compose` up
+sudo REDIS_HOST=${REDIS_HOST}  `which docker-compose` up > /dev/null 2>&1 &
