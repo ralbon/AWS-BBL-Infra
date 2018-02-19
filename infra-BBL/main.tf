@@ -112,6 +112,60 @@ resource "aws_instance" "web-vote" {
   }
 }
 
+## Instanciate Result by dates API EC2
+
+data "template_file" "user_data_result_by_date_api" {
+  template = "${file("user_data_result_by_date_api.tpl")}"
+
+  vars {
+    API_RESULT_HOST="${aws_instance.web-result.private_ip}"
+  }
+}
+
+resource "aws_instance" "web-result-by-date-api" {
+  ami = "${data.aws_ami.ec2-linux.id}"
+  instance_type = "t2.micro"
+
+  subnet_id = "subnet-f578e98e"
+  vpc_security_group_ids = ["sg-ac2acbc4"]
+
+  key_name = "OCTO-BBL-AWS"
+  user_data = "${data.template_file.user_data_result_by_date_api.rendered}"
+
+  tags {
+    Name = "catvsdog-result-by-date-api"
+  }
+
+}
+
+## Instanciate Result by dates EC2
+
+data "template_file" "user_data_result_by_date" {
+  template = "${file("user_data_result_by_date.tpl")}"
+
+  vars {
+    API_HOST="${aws_instance.web-result-by-date-api.private_ip}"
+  }
+}
+
+resource "aws_instance" "web-result-by-date" {
+  ami = "${data.aws_ami.ec2-linux.id}"
+  instance_type = "t2.micro"
+
+  subnet_id = "subnet-f578e98e"
+  vpc_security_group_ids = [
+    "sg-26488b4d",
+    "sg-ac2acbc4"]
+
+  key_name = "OCTO-BBL-AWS"
+  user_data = "${data.template_file.user_data_result_by_date.rendered}"
+
+  tags {
+    Name = "catvsdog-result-by-date"
+  }
+
+}
+
 ## Instanciate Lambda
 
 resource "aws_iam_role" "iam_for_lambda" {
